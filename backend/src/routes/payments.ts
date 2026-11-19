@@ -133,6 +133,15 @@ payments.get('/payments/:id', requireAuth, async (c) => {
   return row ? c.json({ payment: serialize(row, c.get('address')) }) : c.json({ error: 'Payment not found.' }, 404)
 })
 
+/** The sender can change who sees a payment. */
+payments.patch('/payments/:id', requireAuth, async (c) => {
+  const body = await c.req.json<{ visibility?: unknown }>().catch(() => ({}) as { visibility?: unknown })
+  if (!isVisibility(body.visibility)) return c.json({ error: 'Choose public, friends or private.' }, 400)
+  const res = await c.env.DB.prepare('UPDATE payments SET visibility = ?1 WHERE id = ?2 AND from_address = ?3')
+    .bind(body.visibility, Number(c.req.param('id')), c.get('address')).run()
+  return res.meta.changes ? c.json({ ok: true }) : c.json({ error: 'Only the sender can change visibility.' }, 403)
+})
+
 payments.post('/payments/:id/like', requireAuth, async (c) => {
   const id = Number(c.req.param('id'))
   const me = c.get('address')

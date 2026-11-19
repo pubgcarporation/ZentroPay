@@ -1,7 +1,8 @@
 # ZentroPay
 
-USDC invoices on Arc Testnet (chain 5042002). Create an invoice, share a payment link, payer pays in full directly to the creator.
+Venmo-style USDC payments by @handle on Arc Testnet (chain 5042002).
 
-- ZentroPay contract (Arc Testnet): 0x40410946c59174b75501f6f8588e230be7b65605
-- USDC (ERC-20 view, 6 decimals): 0x3600000000000000000000000000000000000000
-- Address is read from VITE_ZENTROPAY_ADDRESS in .env.
+- App: Vite + React in `src/`. Backend: Cloudflare Worker + D1 in `backend/`.
+- No custom smart contract: payments are plain USDC (0x3600000000000000000000000000000000000000) transfers, verified by the backend from the transaction receipt.
+- Dev: Vite proxies `/api` to the local Worker on port 8787.
+- Git author for this repo is pubgcarporation (GitHub noreply email). Do not use another identity.

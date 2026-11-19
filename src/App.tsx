@@ -1,93 +1,106 @@
-import { useMemo, useState } from 'react'
-import { ConnectKitButton } from 'connectkit'
-import { useAccount } from 'wagmi'
-import { ZENTROPAY_ADDRESS, addressUrl } from '@/lib/chain'
-import { useInvoiceIds, useInvoiceRows } from '@/hooks/useInvoices'
-import { useInvoiceActions } from '@/hooks/useInvoiceActions'
-import { BalanceCard } from '@/components/BalanceCard'
-import { CreateInvoice } from '@/components/CreateInvoice'
-import { InvoiceList } from '@/components/InvoiceList'
-import { STATUS } from '@/lib/abi'
+import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
+import { api } from '@/lib/api'
+import { buildShareLink } from '@/lib/share'
+import { FriendsTab } from '@/components/FriendsTab'
+import { HandleTab } from '@/components/HandleTab'
+import { Home } from '@/components/Home'
+import { Onboarding } from '@/components/Onboarding'
+import { PayFlow, type FlowStart } from '@/components/PayFlow'
+import { PaymentsTab } from '@/components/PaymentsTab'
+import { TabBar, type Tab } from '@/components/TabBar'
+import { Welcome } from '@/components/Welcome'
+import { Screen, Spinner } from '@/components/ui'
+import { SessionProvider, useSession } from '@/hooks/useSession'
+import type { User } from '@/lib/types'
 
-type Tab = 'receive' | 'pay'
-
-function linkedId(): bigint | undefined {
-  const raw = new URLSearchParams(window.location.search).get('pay')
-  return raw && /^\d+$/.test(raw) ? BigInt(raw) : undefined
-}
+const FAUCET_URL = 'https://faucet.circle.com'
 
 export default function App() {
-  const { address } = useAccount()
-  const [tab, setTab] = useState<Tab>('receive')
-  const actions = useInvoiceActions()
-  const { receivableIds, payableIds, isLoading } = useInvoiceIds(address)
-  const linked = useMemo(linkedId, [])
+  return (
+    <SessionProvider>
+      <Gate />
+    </SessionProvider>
+  )
+}
 
-  const receive = useInvoiceRows(receivableIds)
-  const pay = useInvoiceRows(payableIds)
-  const shared = useInvoiceRows(linked !== undefined ? [linked] : [])
+function Gate() {
+  const { status } = useSession()
+  if (status === 'loading') {
+    return <Screen className="items-center justify-center"><Spinner className="size-7" /></Screen>
+  }
+  if (status === 'disconnected' || status === 'signed-out') return <Welcome />
+  if (status === 'needs-handle') return <Onboarding />
+  return <Main />
+}
 
-  const sum = (rows: typeof receive.rows) =>
-    rows.filter((r) => r.invoice.status === STATUS.Open).reduce((t, r) => t + r.invoice.amount, 0n)
+function Main() {
+  const { me, token } = useSession()
+  const [tab, setTab] = useState<Tab>('home')
+  const [flow, setFlow] = useState<FlowStart | undefined>()
+  const [shareLink, setShareLink] = useState<string>()
+
+  // Pay link: /?pay=handle opens the pay screen for that person.
+  useEffect(() => {
+    const handle = new URLSearchParams(window.location.search).get('pay')
+    if (!handle || !token) return
+    api<{ user: User }>(`/users/${encodeURIComponent(handle)}`, { token })
+      .then(({ user }) => {
+        if (user.address !== me?.address) setFlow({ mode: 'pay', user })
+        window.history.replaceState({}, '', window.location.pathname)
+      })
+      .catch(() => toast.error(`No one has the handle @${handle}.`))
+  }, [token, me?.address])
+
+  // Resolve the share base once, so copy works on the first tap.
+  useEffect(() => {
+    if (!me) return
+    let live = true
+    buildShareLink(`/?pay=${me.handle}`).then((url) => live && setShareLink(url))
+    return () => { live = false }
+  }, [me])
+
+  async function share() {
+    if (!shareLink) return
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: 'Pay me on ZentroPay', url: shareLink })
+        return
+      } catch {
+        // Cancelled or unsupported: fall through to copy.
+      }
+    }
+    await navigator.clipboard.writeText(shareLink)
+    toast.success('Pay link copied.')
+  }
+
+  const addMoney = () => window.open(FAUCET_URL, '_blank', 'noopener,noreferrer')
+
+  if (flow) {
+    return (
+      <Screen>
+        <PayFlow start={flow} onClose={() => setFlow(undefined)} />
+      </Screen>
+    )
+  }
 
   return (
-    <div className="mx-auto min-h-dvh max-w-md px-4 pb-16 pt-5">
-      <header className="mb-5 flex items-center justify-between">
-        <div>
-          <h1 className="display text-2xl font-bold">ZentroPay</h1>
-          <p className="text-xs" style={{ color: 'var(--muted)' }}>USDC invoices on Arc Testnet</p>
-        </div>
-        <ConnectKitButton />
-      </header>
-
-      {!ZENTROPAY_ADDRESS && (
-        <p className="glass-card mb-4 rounded-2xl p-4 text-sm" style={{ color: 'var(--danger)' }}>
-          The ZentroPay contract address is not configured yet.
-        </p>
-      )}
-
-      <div className="space-y-4">
-        {linked !== undefined && shared.rows.length > 0 && (
-          <div>
-            <h2 className="display mb-2 text-sm font-semibold">Shared with you</h2>
-            <InvoiceList rows={shared.rows} actions={actions} empty="" />
-          </div>
+    <>
+      <Screen className="pb-24">
+        {tab === 'home' && (
+          <Home
+            onPay={() => setFlow({ mode: 'pay' })}
+            onRequest={() => setFlow({ mode: 'request' })}
+            onAddMoney={addMoney}
+            onShare={share}
+            onProfile={() => setTab('handle')}
+          />
         )}
-
-        <BalanceCard receivable={sum(receive.rows)} payable={sum(pay.rows)} />
-        <CreateInvoice step={actions.step} busy={actions.busy} onCreate={actions.create} />
-
-        <div role="tablist" className="glass-inner flex rounded-2xl p-1">
-          {([['receive', 'To receive'], ['pay', 'To pay']] as const).map(([key, label]) => (
-            <button
-              key={key}
-              role="tab"
-              aria-selected={tab === key}
-              onClick={() => setTab(key)}
-              className="min-h-10 flex-1 rounded-xl text-sm font-semibold transition-colors"
-              style={tab === key ? { background: 'var(--accent)', color: '#fff' } : { color: 'var(--muted)' }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {!address ? (
-          <p className="py-6 text-center text-sm" style={{ color: 'var(--muted)' }}>Connect a wallet to see your invoices.</p>
-        ) : isLoading ? (
-          <p className="py-6 text-center text-sm" style={{ color: 'var(--muted)' }}>Loading invoices…</p>
-        ) : tab === 'receive' ? (
-          <InvoiceList rows={receive.rows} actions={actions} empty="No invoices yet. Create one above and share the link." />
-        ) : (
-          <InvoiceList rows={pay.rows} actions={actions} empty="Nothing to pay. Invoices that name your wallet appear here." />
-        )}
-      </div>
-
-      {ZENTROPAY_ADDRESS && (
-        <footer className="mt-8 text-center text-xs" style={{ color: 'var(--subtle)' }}>
-          <a href={addressUrl(ZENTROPAY_ADDRESS)} target="_blank" rel="noreferrer" className="hover:underline">View contract on explorer</a>
-        </footer>
-      )}
-    </div>
+        {tab === 'friends' && <FriendsTab onStart={setFlow} />}
+        {tab === 'payments' && <PaymentsTab onStart={setFlow} />}
+        {tab === 'handle' && <HandleTab onAddMoney={addMoney} onShare={share} />}
+      </Screen>
+      <TabBar tab={tab} onChange={setTab} />
+    </>
   )
 }

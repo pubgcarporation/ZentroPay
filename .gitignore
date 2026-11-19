@@ -4,8 +4,6 @@ dist
 .env.*
 .circle
 recovery_file*
-contracts/out
-contracts/cache
 cache
 traces.jsonl
 console.jsonl
