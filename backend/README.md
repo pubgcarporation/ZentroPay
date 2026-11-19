@@ -4,16 +4,16 @@ Cloudflare Worker (Hono) with a D1 database. It stores handles, profiles, paymen
 
 ## Setup
 1. `bun install`
-2. `bunx wrangler d1 create zentropay` and paste the returned `database_id` into `wrangler.toml`.
+2. `bunx wrangler d1 create zentropay` and paste the returned `database_id` into `wrangler.jsonc`.
 3. `bun run db:remote` to create the tables.
-4. Set `ALLOWED_ORIGINS` in `wrangler.toml` to your frontend origin (comma separated; `*` allows all).
+4. Set `ALLOWED_ORIGINS` in `wrangler.jsonc` to your frontend origin (comma separated; `*` allows all).
 5. `bun run deploy`.
 6. In the app, set `VITE_API_URL` to the Worker URL and rebuild.
 
 ## Local development
 `bun run db:local` then `bun run dev` (port 8787). The app's Vite server proxies `/api` to it.
 
-## Configuration (`wrangler.toml` vars)
+## Configuration (`wrangler.jsonc` vars)
 - `ALLOWED_ORIGINS`: allowed frontend origins
 - `ARC_RPC_URL`: Arc RPC used to verify payments
 - `USDC_ADDRESS`: USDC token address on Arc

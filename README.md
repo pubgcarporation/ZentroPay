@@ -27,5 +27,8 @@ Run locally (two terminals):
 
 Other commands: `bun run build`, `bun run check` (lint and typecheck), `cd backend && bun run typecheck`.
 
+## Deploying the frontend to Vercel
+Import the repository in Vercel (settings come from `vercel.json`) and set `VITE_API_URL` to your backend URL.
+
 ## Deploying the backend to Cloudflare
 See [backend/README.md](backend/README.md).
