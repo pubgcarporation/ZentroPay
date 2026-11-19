@@ -1,0 +1,38 @@
+{
+  "name": "zentropay",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 5173",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src",
+    "check": "oxlint src && tsc --noEmit"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.6.1",
+    "@tanstack/react-query": "^5.108.1",
+    "@web3icons/react": "^4.1.26",
+    "connectkit": "^1.9.2",
+    "framer-motion": "^14.14.0",
+    "lucide-react": "^1.76.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "sonner": "^2.0.8",
+    "viem": "^2.58.1",
+    "wagmi": "^3.7.11"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "@types/node": "^26.6.6",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "oxlint": "^1.94.0",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.8"
+  }
+}
