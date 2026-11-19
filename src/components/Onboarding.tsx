@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { Check, Globe, X } from 'lucide-react'
+import { Check, ChevronLeft, Globe, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { ApiError, api } from '@/lib/api'
-import { Avatar, Field, PrimaryButton, Screen, Spinner } from '@/components/ui'
+import { Avatar, CircleButton, Field, PrimaryButton, Screen, Spinner } from '@/components/ui'
 import { useSession } from '@/hooks/useSession'
 import type { User } from '@/lib/types'
 
@@ -41,7 +41,7 @@ export function Onboarding() {
   async function claim() {
     setSaving(true)
     try {
-      const { user } = await api<{ user: User }>('/users', { token, body: { name, city, handle, bio } })
+      const { user } = await api<{ user: User }>('/users', { token, body: { name: name.trim(), city: city.trim(), handle, bio: bio.trim() } })
       setMe(user)
     } catch (error) {
       toast.error(error instanceof ApiError ? error.message : 'Could not claim your handle.')
@@ -52,20 +52,20 @@ export function Onboarding() {
 
   if (step === 1) {
     return (
-      <Screen className="pb-10 pt-6">
-        <p className="text-right text-xs" style={{ color: 'var(--muted)' }}>Step 1 of 2</p>
-        <h1 className="display mt-8 text-[34px] font-bold leading-[1.1]">
+      <Screen className="pb-8 pt-6">
+        <p className="text-right text-[15px] text-white/80">Step 1 of 2</p>
+        <h1 className="display mt-14 text-[40px] font-bold leading-[1.1]">
           Pay anyone by
           <br />
           @handle
         </h1>
-        <p className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>No account numbers. No addresses.</p>
-        <div className="mt-8 space-y-3">
+        <p className="mt-4 text-[17px] text-white/85">No account numbers. No addresses.</p>
+        <div className="mt-9 space-y-3.5">
           <Field label="Your name">
-            <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder="Your name" autoFocus className="mt-0.5 w-full bg-transparent text-[15px]" />
+            <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} placeholder="Your name" autoFocus className="mt-0.5 w-full bg-transparent text-[18px] font-semibold" />
           </Field>
           <Field label="City">
-            <input value={city} onChange={(e) => setCity(e.target.value)} maxLength={40} placeholder="London, UK" className="mt-0.5 w-full bg-transparent text-[15px]" />
+            <input value={city} onChange={(e) => setCity(e.target.value)} maxLength={40} placeholder="London, UK" className="mt-0.5 w-full bg-transparent text-[18px] font-semibold" />
           </Field>
         </div>
         <div className="mt-auto pt-8">
@@ -77,26 +77,26 @@ export function Onboarding() {
 
   const canClaim = availability.state === 'ok' && !saving
   return (
-    <Screen className="pb-10 pt-6">
+    <Screen className="pb-8 pt-4">
       <div className="flex items-center justify-between">
-        <button onClick={() => setStep(1)} className="min-h-11 text-sm" style={{ color: 'var(--muted)' }}>Back</button>
-        <p className="text-xs" style={{ color: 'var(--muted)' }}>Step 2 of 2</p>
+        <CircleButton onClick={() => setStep(1)} label="Back" size={50}><ChevronLeft className="size-6" /></CircleButton>
+        <p className="text-[15px] text-white/80">Step 2 of 2</p>
       </div>
-      <h1 className="display mt-4 text-[30px] font-bold leading-[1.1]">Choose your handle</h1>
-      <p className="mt-2 text-sm" style={{ color: 'var(--muted)' }}>Friends anywhere can pay you with it.</p>
+      <h1 className="display mt-10 text-[36px] font-bold leading-[1.1]">Claim your handle</h1>
+      <p className="mt-3 text-[17px] text-white/85">Friends anywhere can pay you with it.</p>
 
-      <div className="mt-5 flex items-center gap-3">
-        <Avatar name={name} size={52} />
+      <div className="mt-7 flex items-center gap-4">
+        <Avatar name={name} seed={name} size={82} />
         <div>
-          <div className="text-[15px] font-semibold">{name}</div>
-          <div className="text-xs" style={{ color: 'var(--muted)' }}>{city || 'Add a city later'}</div>
+          <div className="text-[19px] font-bold">{name}</div>
+          <div className="text-[15px] text-white/70">{city || 'Add a city later'}</div>
         </div>
       </div>
 
-      <div className="mt-5 space-y-2">
+      <div className="mt-6 space-y-3">
         <Field label="Handle">
-          <div className="flex items-center text-2xl font-semibold">
-            <span style={{ color: 'var(--muted)' }}>@</span>
+          <div className="flex items-center text-[26px] font-semibold">
+            <span className="text-white/60">@</span>
             <input
               value={handle}
               onChange={(e) => setHandle(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, HANDLE_MAX))}
@@ -109,29 +109,29 @@ export function Onboarding() {
             />
           </div>
         </Field>
-        <div className="flex items-center justify-between px-1 text-xs" aria-live="polite">
-          <span className="flex items-center gap-1" style={{ color: availability.state === 'ok' ? 'var(--success)' : availability.state === 'bad' ? 'var(--danger)' : 'var(--muted)' }}>
-            {availability.state === 'ok' && <><Check className="size-3.5" /> Available</>}
-            {availability.state === 'bad' && <><X className="size-3.5" /> {availability.reason}</>}
+        <div className="flex items-center justify-between px-1.5 text-[15px]" aria-live="polite">
+          <span className="flex items-center gap-2" style={{ color: availability.state === 'ok' ? 'var(--success)' : availability.state === 'bad' ? 'var(--danger)' : 'var(--muted)' }}>
+            {availability.state === 'ok' && <><Check className="size-4" /> Available</>}
+            {availability.state === 'bad' && <><X className="size-4" /> {availability.reason}</>}
             {availability.state === 'checking' && 'Checking…'}
             {availability.state === 'idle' && 'Use 3 to 20 letters, numbers or underscores.'}
           </span>
-          <span className="tabular-nums" style={{ color: 'var(--muted)' }}>{handle.length}/{HANDLE_MAX}</span>
+          <span className="tabular-nums text-white/70">{handle.length}/{HANDLE_MAX}</span>
         </div>
         <Field label="Bio">
-          <input value={bio} onChange={(e) => setBio(e.target.value)} maxLength={80} placeholder="Building on Arc" className="mt-0.5 w-full bg-transparent text-[15px]" />
+          <input value={bio} onChange={(e) => setBio(e.target.value)} maxLength={80} placeholder="Building on Arc" className="mt-0.5 w-full bg-transparent text-[18px] font-semibold" />
         </Field>
-        <div className="flex items-center gap-3 rounded-2xl surface px-4 py-3">
-          <Globe className="size-5" style={{ color: 'var(--brand-soft)' }} />
+        <div className="flex items-center gap-3.5 rounded-[20px] border border-white/10 bg-white/[0.06] px-4 py-3.5">
+          <Globe className="size-5" style={{ color: 'var(--lavender)' }} />
           <div>
-            <div className="text-[13px] font-medium">Your ZentroPay name</div>
-            <div className="text-xs" style={{ color: 'var(--muted)' }}>{handle || 'handle'}.zentropay.eth</div>
+            <div className="text-[15px] font-semibold">Your ZentroPay name</div>
+            <div className="text-[14px] text-white/75">{handle || 'handle'}.zentropay.eth</div>
           </div>
         </div>
       </div>
 
       <div className="mt-auto pt-8">
-        <PrimaryButton disabled={!canClaim} onClick={claim}>
+        <PrimaryButton disabled={!canClaim} busy={saving} onClick={claim}>
           {saving ? <Spinner /> : `Claim @${handle || 'handle'}`}
         </PrimaryButton>
       </div>

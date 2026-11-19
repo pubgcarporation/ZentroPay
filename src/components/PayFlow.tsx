@@ -1,13 +1,13 @@
 import { useState } from 'react'
 import { erc20Abi } from 'viem'
-import { AlertTriangle, ArrowLeft, Globe, Lock, Zap, Users } from 'lucide-react'
+import { AlertTriangle, Check, Globe, Lock, Pencil, Users } from 'lucide-react'
 import { useAccount, usePublicClient, useSwitchChain, useWriteContract } from 'wagmi'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { ApiError, api } from '@/lib/api'
 import { ARC_CHAIN_ID, USDC_ADDRESS } from '@/lib/chain'
 import { formatFee, formatUsdc, parseOnchainError, parseUsdc } from '@/lib/format'
-import { Avatar, PrimaryButton, Row, Spinner } from '@/components/ui'
+import { Avatar, CloseButton, PrimaryButton, Row, Screen, Spinner } from '@/components/ui'
 import { PaySuccess, type PayResult } from '@/components/PaySuccess'
 import { RecipientPicker } from '@/components/RecipientPicker'
 import { useFriends, useUsdcBalance } from '@/hooks/useApiQueries'
@@ -144,35 +144,39 @@ export function PayFlow({ start, onClose }: { start: FlowStart; onClose: () => v
   if (result) return <PaySuccess result={result} retrying={retrying} onRetry={retrySave} onDone={onClose} />
   if (requestSent && amount !== undefined) {
     return (
-      <div className="flex min-h-dvh flex-col items-center pb-8 pt-24 text-center">
-        <div className="pop grid size-20 place-items-center rounded-full bg-[var(--success)] text-black text-3xl font-bold">✓</div>
-        <p className="mt-5 text-[15px]" style={{ color: 'var(--muted)' }}>Request sent to @{user.handle}</p>
-        <p className="display mt-1 text-[48px] font-bold tabular-nums">{formatUsdc(amount)}</p>
-        <p className="mt-2 max-w-xs text-sm" style={{ color: 'var(--muted)' }}>They will see it under Payments and can pay you in one tap.</p>
+      <Screen className="items-center pb-8 pt-28 text-center">
+        <div className="pop grid size-24 place-items-center rounded-full bg-[var(--success)] text-black"><Check className="size-12" strokeWidth={2.4} /></div>
+        <p className="mt-6 text-[17px] text-white/75">Request sent to @{user.handle}</p>
+        <p className="display mt-1 text-[56px] font-bold tabular-nums">{formatUsdc(amount)}</p>
+        <p className="mt-2 max-w-xs text-[16px] text-white/65">They will see it under Payments and can pay you in one tap.</p>
         <div className="mt-auto w-full pt-6"><PrimaryButton onClick={onClose}>Done</PrimaryButton></div>
-      </div>
+      </Screen>
     )
   }
 
   const working = busy !== 'idle'
-  const cta = busy === 'switching' ? 'Switching network…' : busy === 'signing' ? 'Confirm in wallet…' : busy === 'confirming' ? 'Confirming on Arc…' : busy === 'saving' ? 'Saving…' : null
-  const label = isPay ? (amount ? `Pay ${formatUsdc(amount)}` : 'Enter an amount') : amount ? `Request ${formatUsdc(amount)}` : 'Enter an amount'
+  const cta = busy === 'switching' ? 'Switching network…' : busy === 'signing' ? 'Confirm in wallet…' : busy === 'confirming' ? 'Confirming…' : 'Saving…'
+  const label = amount ? `${isPay ? 'Pay' : 'Request'} ${formatUsdc(amount)}` : 'Enter an amount'
 
   return (
-    <div className="flex min-h-dvh flex-col pb-6 pt-4">
-      <div className="flex items-center justify-between">
-        <button onClick={() => setUser(undefined)} disabled={working} aria-label="Change recipient" className="grid size-11 place-items-center rounded-full surface-2"><ArrowLeft className="size-5" /></button>
-        <div className="flex items-center gap-2 rounded-full surface-2 py-1.5 pl-1.5 pr-4">
-          <Avatar name={user.name} seed={user.handle} size={28} />
-          <span className="text-sm font-semibold">@{user.handle}</span>
-          {user.city && <span className="text-xs" style={{ color: 'var(--muted)' }}>{user.city}</span>}
-        </div>
-        <span className="size-11" />
+    <Screen className="pb-6 pt-4">
+      <div className="relative flex items-center justify-between">
+        <CloseButton onClick={onClose} />
+        <button
+          onClick={() => !working && setUser(undefined)}
+          aria-label="Change recipient"
+          className="absolute left-1/2 flex h-[52px] -translate-x-1/2 items-center gap-2.5 whitespace-nowrap rounded-full border border-white/15 bg-white/[0.12] py-1.5 pl-2 pr-5"
+        >
+          <Avatar name={user.name} seed={user.name} size={36} />
+          <span className="text-[18px] font-bold">@{user.handle}</span>
+          {user.city && <span className="text-[16px] text-white/65">{user.city}</span>}
+        </button>
+        <span className="size-[52px]" />
       </div>
 
-      <div className="mt-10 flex flex-col items-center">
-        <div className="display flex items-baseline text-[56px] font-bold leading-none">
-          <span className="text-white/60">$</span>
+      <div className="mt-14 flex flex-col items-center">
+        <div className="flex items-start justify-center">
+          <span className="display mt-3 text-[38px] font-semibold leading-none text-white/65">$</span>
           <input
             autoFocus={!start.amount}
             inputMode="decimal"
@@ -185,61 +189,64 @@ export function PayFlow({ start, onClose }: { start: FlowStart; onClose: () => v
             placeholder="0"
             aria-label="Amount in USDC"
             size={Math.max(amountStr.length, 1)}
-            className="min-w-[1ch] bg-transparent text-center tabular-nums"
+            className="display min-w-[1ch] bg-transparent text-center text-[100px] font-bold leading-[1] tabular-nums placeholder:text-white/30"
           />
         </div>
         {isPay && (
-          <p className="mt-3 text-sm tabular-nums" style={{ color: insufficient ? 'var(--danger)' : 'var(--muted)' }}>
+          <p className="mt-4 text-[17px] tabular-nums" style={{ color: insufficient ? 'var(--danger)' : 'rgba(255,255,255,0.8)' }}>
             {insufficient ? 'Not enough USDC' : `${balance.data === undefined ? '…' : formatUsdc(balance.data)} available`}
           </p>
         )}
       </div>
 
-      <input
-        value={note}
-        onChange={(e) => setNote(e.target.value)}
-        maxLength={100}
-        readOnly={start.note !== undefined && start.requestId !== undefined}
-        placeholder="What's it for?"
-        aria-label="What's it for?"
-        className="mt-8 min-h-12 w-full rounded-full surface-2 px-5 text-[15px]"
-      />
+      <label className="field mt-9 flex h-[68px] items-center gap-3.5 rounded-full px-6">
+        <Pencil className="size-5 shrink-0 text-white/80" />
+        <input
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          maxLength={100}
+          readOnly={start.requestId !== undefined}
+          placeholder="What's it for?"
+          aria-label="What's it for?"
+          className="w-full bg-transparent text-[19px] font-medium"
+        />
+      </label>
 
       {isPay && (
-        <div className="mt-4 flex gap-2" role="radiogroup" aria-label="Who can see this">
+        <div className="mt-5 flex justify-center gap-2.5" role="radiogroup" aria-label="Who can see this">
           {VISIBILITY.map(({ key, label: text, icon: Icon }) => (
             <button
               key={key}
               role="radio"
               aria-checked={visibility === key}
               onClick={() => setVisibility(key)}
-              className="flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-full text-[13px] font-semibold transition-colors"
-              style={visibility === key ? { background: '#fff', color: '#000' } : { background: 'var(--surface-2)', color: 'var(--muted)' }}
+              className={`flex h-12 items-center gap-2 rounded-full px-5 text-[17px] font-semibold transition-colors ${visibility === key ? 'bg-white text-black' : 'chip-outline text-white'}`}
             >
-              <Icon className="size-4" /> {text}
+              <Icon className="size-[18px]" /> {text}
             </button>
           ))}
         </div>
       )}
 
-      <div className="mt-auto space-y-3 pt-6">
-        {isPay && amount !== undefined && (
-          <div className="overflow-hidden rounded-2xl surface">
-            <Row label={`@${user.handle} gets`}>{formatUsdc(amount)}</Row>
-            <Row label="Fee">{fee.data ?? (fee.isLoading ? '…' : 'Network fee')}</Row>
-            <Row label="Arrives"><span className="inline-flex items-center gap-1"><Zap className="size-3.5" /> Instantly</span></Row>
-          </div>
-        )}
-        {firstTime && (
-          <p className="flex items-start gap-2 rounded-2xl p-3 text-xs" style={{ background: 'rgba(245,184,75,0.12)', color: 'var(--warn)' }}>
-            <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-            First time paying @{user.handle}. Payments are final and can&apos;t be reversed, so check the handle.
-          </p>
-        )}
-        <PrimaryButton disabled={amount === undefined || insufficient || working} onClick={isPay ? pay : sendRequest}>
-          {working ? <><Spinner className="size-4" /> {cta}</> : label}
+      {isPay && amount !== undefined && (
+        <div className="card mt-5 overflow-hidden rounded-[26px]">
+          <Row label={`@${user.handle} gets`}>{formatUsdc(amount)}</Row>
+          <Row label="Fee">{fee.data ?? (fee.isLoading ? '…' : 'Network fee')}</Row>
+          <Row label="Arrives"><span style={{ color: 'var(--success)' }}>Instantly</span></Row>
+        </div>
+      )}
+      {firstTime && (
+        <p className="mt-4 flex items-start gap-3.5 rounded-[22px] border px-5 py-4 text-[16px] leading-snug" style={{ background: 'rgba(245,164,91,0.09)', borderColor: 'rgba(245,164,91,0.35)', color: '#f6e1cb' }}>
+          <AlertTriangle className="mt-0.5 size-5 shrink-0" style={{ color: 'var(--warn)' }} />
+          First time paying @{user.handle}. Payments can&apos;t be undone.
+        </p>
+      )}
+
+      <div className="mt-auto pt-6">
+        <PrimaryButton disabled={amount === undefined || insufficient} busy={working} onClick={isPay ? pay : sendRequest}>
+          {working ? <><Spinner className="size-5" /><span className="sr-only">{cta}</span></> : label}
         </PrimaryButton>
       </div>
-    </div>
+    </Screen>
   )
 }

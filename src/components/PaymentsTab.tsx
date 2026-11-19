@@ -24,12 +24,12 @@ export function PaymentsTab({ onStart }: { onStart: (start: FlowStart) => void }
   const pending = (requests.data ?? []).filter((r) => r.status === 'pending')
 
   return (
-    <div className="pb-6 pt-5">
-      <h1 className="display text-2xl font-bold">Payments</h1>
+    <div className="pb-32 pt-8">
+      <h1 className="display text-[36px] font-bold">Payments</h1>
 
       {pending.length > 0 && (
-        <section className="mt-4">
-          <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--muted)' }}>Requests</h2>
+        <section className="mt-5">
+          <h2 className="mb-1 text-[15px] text-white/60">Requests</h2>
           {pending.map((r) => (
             <RequestRow
               key={r.id}
@@ -41,10 +41,10 @@ export function PaymentsTab({ onStart }: { onStart: (start: FlowStart) => void }
         </section>
       )}
 
-      <section className="mt-4">
-        <h2 className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--muted)' }}>History</h2>
+      <section className="mt-5">
+        <h2 className="mb-1 text-[15px] text-white/60">History</h2>
         {feed.isLoading ? (
-          <div className="grid place-items-center py-10" style={{ color: 'var(--muted)' }}><Spinner /></div>
+          <div className="grid place-items-center py-10" ><Spinner /></div>
         ) : feed.data && feed.data.length > 0 ? (
           feed.data.map((p) => <FeedItem key={p.id} payment={p} showAmount />)
         ) : (
@@ -60,15 +60,15 @@ function RequestRow({ request, onPay, onClose }: { request: MoneyRequest; onPay:
   const other = incoming ? request.from : request.to
   return (
     <div className="flex items-center gap-3 border-b border-white/[0.07] py-3 last:border-b-0">
-      <Avatar name={other.name} seed={other.handle} size={40} />
+      <Avatar name={other.name} seed={other.name} size={46} />
       <div className="min-w-0 flex-1">
-        <div className="truncate text-[14px] font-semibold">
+        <div className="truncate text-[16px] font-bold">
           {incoming ? `@${other.handle} requested` : `You requested from @${other.handle}`} {formatUsdc(BigInt(request.amount))}
         </div>
-        <div className="truncate text-xs" style={{ color: 'var(--muted)' }}>{request.note || 'No note'} · {timeAgo(request.createdAt)}</div>
+        <div className="truncate text-[14px] text-white/65">{request.note || 'No note'} · {timeAgo(request.createdAt)}</div>
       </div>
-      {incoming && <button onClick={onPay} className="min-h-11 rounded-full bg-white px-4 text-[13px] font-semibold text-black">Pay</button>}
-      <button onClick={onClose} className="min-h-11 rounded-full surface-2 px-3.5 text-[13px] font-semibold">{incoming ? 'Decline' : 'Cancel'}</button>
+      {incoming && <button onClick={onPay} className="h-11 rounded-full bg-white px-4 text-[15px] font-semibold text-black">Pay</button>}
+      <button onClick={onClose} className="field h-11 rounded-full px-3.5 text-[15px] font-semibold">{incoming ? 'Decline' : 'Cancel'}</button>
     </div>
   )
 }

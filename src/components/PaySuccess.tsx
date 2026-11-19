@@ -5,7 +5,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { ApiError, api } from '@/lib/api'
 import { txUrl } from '@/lib/chain'
 import { shortAddress, splitUsdc } from '@/lib/format'
-import { PrimaryButton, Row, Spinner } from '@/components/ui'
+import { PrimaryButton, Row, Screen, Spinner } from '@/components/ui'
 import { useSession } from '@/hooks/useSession'
 import type { Payment, User, Visibility } from '@/lib/types'
 
@@ -64,28 +64,36 @@ export function PaySuccess({ result, retrying, onRetry, onDone }: Props) {
 
   const Icon = VIS[visibility].icon
   return (
-    <div className="flex min-h-dvh flex-col pb-8 pt-10">
+    <Screen className="pb-6 pt-10">
       <div className="flex flex-col items-center text-center">
-        <div className="pop grid size-20 place-items-center rounded-full bg-[var(--success)] text-black"><Check className="size-10" strokeWidth={3} /></div>
-        <p className="mt-5 text-[15px]" style={{ color: 'var(--muted)' }}>Sent to @{result.to.handle}</p>
-        <p className="display mt-1 text-[52px] font-bold tabular-nums leading-none">${whole}<span className="text-2xl text-white/70">.{cents}</span></p>
-        <p className="mt-4 rounded-full surface-2 px-3.5 py-1.5 text-xs font-medium">Arrived in {result.seconds.toFixed(1)}s</p>
+        <div className="pop grid size-[120px] place-items-center rounded-full" style={{ background: 'rgba(111,242,179,0.14)' }}>
+          <div className="grid size-[96px] place-items-center rounded-full text-black" style={{ background: 'var(--success)' }}>
+            <Check className="size-12" strokeWidth={2.2} />
+          </div>
+        </div>
+        <p className="mt-5 text-[17px] text-white/75">Sent to @{result.to.handle}</p>
+        <p className="display mt-2 flex items-baseline text-[60px] font-bold leading-none tabular-nums">
+          ${whole}<span className="text-[34px] font-semibold text-white/85">.{cents}</span>
+        </p>
+        <p className="mt-5 rounded-full border border-white/15 bg-white/[0.08] px-4 py-2 text-[16px] font-semibold" style={{ color: 'var(--success)' }}>
+          Arrived in {result.seconds.toFixed(1)}s
+        </p>
       </div>
 
-      <div className="relative mt-8 overflow-visible rounded-2xl surface">
+      <div className="card relative mt-8 rounded-[26px]">
         {result.note && <Row label="Note">{result.note}</Row>}
         <Row label="Visible to">
-          <button onClick={() => setMenu((v) => !v)} className="-my-2 flex min-h-11 items-center gap-1.5 py-2" aria-haspopup="menu" aria-expanded={menu}>
-            <Icon className="size-4" /> {VIS[visibility].label} <ChevronDown className="size-4" />
+          <button onClick={() => setMenu((v) => !v)} className="-my-3 flex h-14 items-center gap-2" aria-haspopup="menu" aria-expanded={menu}>
+            <Icon className="size-[18px]" /> {VIS[visibility].label} <ChevronDown className="size-4 text-white/60" />
           </button>
         </Row>
         {menu && (
-          <div role="menu" className="absolute right-3 top-[calc(100%-4px)] z-10 w-40 overflow-hidden rounded-2xl surface-2 shadow-xl">
+          <div role="menu" className="rise absolute right-4 top-[calc(100%-8px)] z-10 w-44 overflow-hidden rounded-2xl border border-white/10 bg-[#38383c] shadow-xl" style={{ top: result.note ? 112 : 56 }}>
             {(Object.keys(VIS) as Visibility[]).map((key) => {
               const Item = VIS[key].icon
               return (
-                <button key={key} role="menuitem" onClick={() => changeVisibility(key)} className="flex min-h-11 w-full items-center gap-2 px-4 text-sm hover:bg-white/10">
-                  <Item className="size-4" /> {VIS[key].label}
+                <button key={key} role="menuitem" onClick={() => changeVisibility(key)} className="flex h-12 w-full items-center gap-2.5 px-4 text-[16px] font-medium hover:bg-white/10">
+                  <Item className="size-[18px]" /> {VIS[key].label}
                   {key === visibility && <Check className="ml-auto size-4" />}
                 </button>
               )
@@ -95,25 +103,25 @@ export function PaySuccess({ result, retrying, onRetry, onDone }: Props) {
         <Row label="Fee">{result.fee}</Row>
         <Row label="Paid in">USDC on Arc</Row>
         <Row label="Transaction">
-          <button onClick={copyHash} className="mono -my-2 flex min-h-11 items-center gap-1.5 py-2 text-xs">
-            {shortAddress(result.hash)} <Copy className="size-3.5" />
+          <button onClick={copyHash} aria-label="Copy transaction hash" className="mono -my-3 flex h-14 items-center gap-2 text-[15px]">
+            {shortAddress(result.hash)} <Copy className="size-4 text-white/70" />
           </button>
         </Row>
       </div>
 
       {result.recordError && (
-        <div className="mt-4 rounded-2xl p-4 text-sm" style={{ background: 'rgba(245,184,75,0.12)', color: 'var(--warn)' }}>
+        <div className="mt-4 rounded-[22px] border px-5 py-4 text-[15px]" style={{ background: 'rgba(245,164,91,0.09)', borderColor: 'rgba(245,164,91,0.35)', color: '#f6e1cb' }}>
           Your payment went through, but it could not be added to your feed: {result.recordError}
-          <button onClick={onRetry} disabled={retrying} className="mt-2 flex min-h-11 items-center gap-2 font-semibold underline">
+          <button onClick={onRetry} disabled={retrying} className="mt-2 flex h-11 items-center gap-2 font-bold underline">
             {retrying ? <Spinner className="size-4" /> : 'Try again'}
           </button>
         </div>
       )}
 
-      <a href={txUrl(result.hash)} target="_blank" rel="noopener noreferrer" className="mt-5 flex min-h-11 items-center justify-center gap-1.5 text-sm font-medium" style={{ color: 'var(--brand-soft)' }}>
-        View on Arc <ExternalLink className="size-4" />
+      <a href={txUrl(result.hash)} target="_blank" rel="noopener noreferrer" className="mt-5 flex h-12 items-center justify-center gap-2 text-[17px] font-semibold" style={{ color: 'var(--lavender)' }}>
+        View on Arc <ExternalLink className="size-[18px]" />
       </a>
-      <div className="mt-auto pt-6"><PrimaryButton onClick={onDone}>Done</PrimaryButton></div>
-    </div>
+      <div className="mt-auto pt-4"><PrimaryButton onClick={onDone}>Done</PrimaryButton></div>
+    </Screen>
   )
 }

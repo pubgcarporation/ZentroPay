@@ -20,7 +20,7 @@ createRoot(document.getElementById('root')!).render(
         <ConnectKitProvider
           mode="dark"
           customTheme={{
-            '--ck-font-family': "'DM Sans', sans-serif",
+            '--ck-font-family': "'Figtree', sans-serif",
             '--ck-accent-color': '#3b12c8',
             '--ck-accent-text-color': '#ffffff',
           }}

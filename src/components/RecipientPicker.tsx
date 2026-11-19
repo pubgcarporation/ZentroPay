@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { AtSign } from 'lucide-react'
-import { Avatar, CloseButton, Spinner } from '@/components/ui'
+import { Avatar, CloseButton, Screen, Spinner } from '@/components/ui'
 import { useUserSearch } from '@/hooks/useApiQueries'
 import type { User } from '@/lib/types'
 
@@ -10,25 +10,26 @@ interface Props {
   onClose: () => void
 }
 
-/** Search registered handles and names; shows your contacts first. */
+/** Bottom sheet: search registered handles and names; shows your friends first. */
 export function RecipientPicker({ title, onPick, onClose }: Props) {
   const [query, setQuery] = useState('')
   const [debounced, setDebounced] = useState('')
   const results = useUserSearch(debounced)
 
   useEffect(() => {
-    const timer = setTimeout(() => setDebounced(query.trim()), 250)
+    const timer = setTimeout(() => setDebounced(query.trim().replace(/^@/, '')), 250)
     return () => clearTimeout(timer)
   }, [query])
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      <div className="flex items-center justify-between pb-2 pt-4">
-        <h1 className="display text-2xl font-bold">{title}</h1>
+    <Screen sheet className="pb-6 pt-6">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="display text-[28px] font-bold leading-tight">{title}</h1>
         <CloseButton onClick={onClose} />
       </div>
-      <label className="mt-3 flex min-h-12 items-center gap-2 rounded-full surface-2 px-4">
-        <AtSign className="size-4" style={{ color: 'var(--muted)' }} />
+
+      <label className="mt-6 flex h-16 items-center gap-3 rounded-full border border-white/20 bg-white/[0.2] px-5">
+        <AtSign className="size-5 text-white/70" />
         <input
           autoFocus
           value={query}
@@ -37,34 +38,33 @@ export function RecipientPicker({ title, onPick, onClose }: Props) {
           aria-label="Search by handle or name"
           autoCapitalize="none"
           autoCorrect="off"
-          className="w-full bg-transparent text-[15px]"
+          className="w-full bg-transparent text-[19px] font-medium"
         />
       </label>
 
-      <p className="mb-1 mt-5 text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: 'var(--muted)' }}>
-        {debounced ? 'Results' : 'Your friends'}
-      </p>
+      {!debounced && <p className="mb-1 mt-6 text-[15px] text-white/60">Your friends</p>}
       {results.isLoading ? (
-        <div className="grid place-items-center py-10" style={{ color: 'var(--muted)' }}><Spinner /></div>
+        <div className="grid place-items-center py-10 text-white/60"><Spinner /></div>
       ) : results.data && results.data.length > 0 ? (
-        <ul>
+        <ul className="mt-2">
           {results.data.map((u) => (
-            <li key={u.address}>
-              <button onClick={() => onPick(u)} className="flex min-h-16 w-full items-center gap-3 rounded-2xl px-1 text-left transition-colors hover:bg-white/5">
-                <Avatar name={u.name} seed={u.handle} size={44} />
-                <span className="min-w-0">
-                  <span className="block truncate text-[15px] font-semibold">@{u.handle}</span>
-                  <span className="block truncate text-xs" style={{ color: 'var(--muted)' }}>{u.name}{u.city ? ` · ${u.city}` : ''}</span>
+            <li key={u.address} className="border-b border-white/[0.08] last:border-b-0">
+              <button onClick={() => onPick(u)} className="flex min-h-[84px] w-full items-center gap-4 text-left">
+                <Avatar name={u.name} seed={u.name} size={58} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[19px] font-bold">{u.name}</span>
+                  <span className="block truncate text-[16px] text-white/65">@{u.handle}</span>
                 </span>
+                {u.city && <span className="shrink-0 text-[16px] text-white/60">{u.city}</span>}
               </button>
             </li>
           ))}
         </ul>
       ) : (
-        <p className="py-10 text-center text-sm" style={{ color: 'var(--muted)' }}>
+        <p className="py-10 text-center text-[16px] text-white/60">
           {debounced ? 'No one found with that handle.' : 'No friends yet. Search for a handle to pay someone new.'}
         </p>
       )}
-    </div>
+    </Screen>
   )
 }

@@ -8,7 +8,9 @@ import { Avatar, Row } from '@/components/ui'
 import { useSession } from '@/hooks/useSession'
 import type { User } from '@/lib/types'
 
-export function HandleTab({ onAddMoney, onShare }: { onAddMoney: () => void; onShare: () => void }) {
+const pill = 'flex h-16 items-center justify-center gap-2.5 rounded-full border border-white/10 bg-white/[0.14] text-[18px] font-semibold transition-colors hover:bg-white/20'
+
+export function HandleTab({ onAddMoney }: { onAddMoney: () => void }) {
   const { me, address, token, setMe, signOut } = useSession()
   const [editing, setEditing] = useState(false)
   const [bio, setBio] = useState(me?.bio ?? '')
@@ -24,45 +26,50 @@ export function HandleTab({ onAddMoney, onShare }: { onAddMoney: () => void; onS
     }
   }
 
-  async function copyAddress() {
-    await navigator.clipboard.writeText(address as string)
-    toast.success('Wallet address copied.')
+  async function copy(value: string, what: string) {
+    await navigator.clipboard.writeText(value)
+    toast.success(`${what} copied.`)
   }
 
   return (
-    <div className="pb-6 pt-5">
-      <h1 className="display text-2xl font-bold">Handle</h1>
+    <div className="pb-32 pt-8">
+      <h1 className="display text-[36px] font-bold">Handle</h1>
 
-      <section className="mt-4 flex flex-col items-center rounded-[28px] surface px-5 py-6 text-center">
-        <Avatar name={me.name} seed={me.handle} size={72} />
-        <h2 className="display mt-3 text-2xl font-bold">@{me.handle}</h2>
-        <p className="text-sm" style={{ color: 'var(--muted)' }}>{me.name}{me.city ? ` · ${me.city}` : ''}</p>
+      <section className="card mt-5 flex flex-col items-center rounded-[30px] px-5 pb-6 pt-7 text-center">
+        <Avatar name={me.name} seed={me.name} size={88} />
+        <h2 className="display mt-4 text-[34px] font-bold leading-none">@{me.handle}</h2>
+        <p className="mt-2.5 text-[17px] text-white/85">{me.name}</p>
         {editing ? (
           <div className="mt-3 flex w-full items-center gap-2">
-            <input value={bio} onChange={(e) => setBio(e.target.value)} maxLength={80} aria-label="Bio" className="min-h-11 w-full rounded-full surface-2 px-4 text-sm" />
-            <button onClick={saveBio} className="min-h-11 rounded-full bg-white px-4 text-sm font-semibold text-black">Save</button>
+            <input value={bio} onChange={(e) => setBio(e.target.value)} maxLength={80} aria-label="Bio" className="field h-12 w-full rounded-full px-4 text-[16px]" />
+            <button onClick={saveBio} className="h-12 rounded-full bg-white px-5 text-[16px] font-semibold text-black">Save</button>
           </div>
         ) : (
-          <button onClick={() => setEditing(true)} className="mt-2 flex min-h-11 items-center gap-1.5 text-sm" style={{ color: 'var(--muted)' }}>
+          <button onClick={() => setEditing(true)} className="mt-0.5 flex h-10 items-center gap-2 text-[16px] text-white/65">
             {me.bio || 'Add a bio'} <Pencil className="size-3.5" />
           </button>
         )}
       </section>
 
-      <div className="mt-4 overflow-hidden rounded-2xl surface">
-        <Row label="ENS name">{me.handle}.zentropay.eth</Row>
+      <div className="card mt-4 overflow-hidden rounded-[26px]">
+        <Row label="ENS name">
+          <button onClick={() => copy(`${me.handle}.zentropay.eth`, 'Name')} className="-my-3 flex h-14 items-center gap-2.5">
+            {me.handle}.zentropay.eth <Copy className="size-4 text-white/70" />
+          </button>
+        </Row>
         <Row label="Wallet">
-          <button onClick={copyAddress} className="mono -my-2 flex min-h-11 items-center gap-1.5 py-2 text-xs">{shortAddress(address)} <Copy className="size-3.5" /></button>
+          <button onClick={() => copy(address, 'Wallet address')} aria-label="Copy wallet address" className="mono -my-3 flex h-14 items-center gap-2.5 text-[16px]">
+            {shortAddress(address)} <Copy className="size-4 text-white/70" />
+          </button>
         </Row>
         <Row label="Network">Arc Testnet</Row>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3">
-        <button onClick={onAddMoney} className="flex min-h-12 items-center justify-center gap-1.5 rounded-full bg-white text-sm font-semibold text-black"><Plus className="size-4" /> Add money</button>
-        <a href={addressUrl(address)} target="_blank" rel="noopener noreferrer" className="flex min-h-12 items-center justify-center gap-1.5 rounded-full surface-2 text-sm font-semibold">View on Arc <ExternalLink className="size-4" /></a>
+      <div className="mt-4 grid grid-cols-2 gap-3.5">
+        <button onClick={onAddMoney} className={pill}><Plus className="size-5" /> Add money</button>
+        <a href={addressUrl(address)} target="_blank" rel="noopener noreferrer" className={pill}>View on Arc <ExternalLink className="size-[18px]" /></a>
       </div>
-      <button onClick={onShare} className="mt-3 min-h-12 w-full rounded-full surface-2 text-sm font-semibold">Share my pay link</button>
-      <button onClick={signOut} className="mt-3 flex min-h-12 w-full items-center justify-center gap-1.5 text-sm" style={{ color: 'var(--muted)' }}><LogOut className="size-4" /> Sign out</button>
+      <button onClick={signOut} className="mt-4 flex h-12 w-full items-center justify-center gap-2 text-[16px] text-white/60"><LogOut className="size-4" /> Sign out</button>
     </div>
   )
 }
